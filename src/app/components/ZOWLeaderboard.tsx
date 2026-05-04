@@ -201,16 +201,6 @@ export function ZOWLeaderboard({ currentZOW, onContinue, onViewHistory }: ZOWLea
                   WEEKS
                 </text>
 
-                {/* Zone labels */}
-                <text x={133.33} y={20} textAnchor="middle" fontSize="10" fill="#DC2626" fontFamily="Inter, sans-serif" fontWeight="600">
-                  Ill Being
-                </text>
-                <text x={320} y={20} textAnchor="middle" fontSize="10" fill="#D97706" fontFamily="Inter, sans-serif" fontWeight="600">
-                  Well Being
-                </text>
-                <text x={506.67} y={20} textAnchor="middle" fontSize="10" fill="#059669" fontFamily="Inter, sans-serif" fontWeight="600">
-                  Wellbeing
-                </text>
 
                 {/* X-axis labels */}
                 <text x={133.33} y={395} textAnchor="middle" fontSize="9" fill="#6B7280" fontFamily="Inter, sans-serif">
@@ -269,17 +259,21 @@ export function ZOWLeaderboard({ currentZOW, onContinue, onViewHistory }: ZOWLea
                     return { x, y, entry };
                   });
 
-                  let path = positions.length > 0 ? `M ${positions[0].x} ${positions[0].y}` : '';
+                  // Generate smooth path
+                  let snakePath = positions.length > 0 ? `M ${positions[0].x} ${positions[0].y}` : '';
                   for (let i = 1; i < positions.length; i++) {
                     const prev = positions[i - 1];
                     const curr = positions[i];
                     const midY = (prev.y + curr.y) / 2;
-                    path += ` Q ${prev.x} ${midY}, ${curr.x} ${curr.y}`;
+                    snakePath += ` Q ${prev.x} ${midY}, ${curr.x} ${curr.y}`;
                   }
 
                   return (
                     <>
-                      {/* Dots only - no connecting lines */}
+                      {/* Connecting path */}
+                      <path d={snakePath} fill="none" stroke="#A78BFA" strokeWidth="3" opacity="0.5" />
+
+                      {/* Dots */}
                       {positions.map((pos, index) => (
                         <g key={index}>
                           <circle

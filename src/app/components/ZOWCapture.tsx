@@ -180,39 +180,6 @@ export function ZOWCapture({ userName, onComplete }: ZOWCaptureProps) {
                     </span>
                   </div>
 
-                  {/* Zone Labels - positioned at center vertically */}
-                  <div className="absolute inset-0 flex items-center justify-between px-12 pointer-events-none">
-                    <div
-                      className="text-xs text-center"
-                      style={{
-                        fontFamily: 'Inter, sans-serif',
-                        color: '#DC2626',
-                        fontWeight: 600
-                      }}
-                    >
-                      Zone of<br />Ill Being
-                    </div>
-                    <div
-                      className="text-xs text-center"
-                      style={{
-                        fontFamily: 'Inter, sans-serif',
-                        color: '#D97706',
-                        fontWeight: 600
-                      }}
-                    >
-                      Zone of<br />Well Being
-                    </div>
-                    <div
-                      className="text-xs text-center"
-                      style={{
-                        fontFamily: 'Inter, sans-serif',
-                        color: '#059669',
-                        fontWeight: 600
-                      }}
-                    >
-                      Zone of<br />Wellbeing
-                    </div>
-                  </div>
 
                   {/* Current Time Indicator Line */}
                   <div

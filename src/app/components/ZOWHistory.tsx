@@ -87,35 +87,6 @@ export function ZOWHistory({ onBack }: ZOWHistoryProps) {
     return '#F87171';
   };
 
-  const canvasWidth = 600;
-  const canvasHeight = 800;
-  const padding = 40;
-  const dotRadius = 8;
-
-  // Calculate positions for each entry
-  const positions = historyData.map((entry, index) => {
-    const x = padding + ((entry.score - 1) / 6) * (canvasWidth - 2 * padding);
-    const y = padding + (index / (historyData.length - 1)) * (canvasHeight - 2 * padding);
-    return { x, y, entry };
-  });
-
-  // Generate SVG path for the snake
-  const generatePath = () => {
-    if (positions.length === 0) return '';
-
-    let path = `M ${positions[0].x} ${positions[0].y}`;
-
-    for (let i = 1; i < positions.length; i++) {
-      // Use quadratic bezier curves for smooth snake flow
-      const prev = positions[i - 1];
-      const curr = positions[i];
-
-      const midY = (prev.y + curr.y) / 2;
-      path += ` Q ${prev.x} ${midY}, ${curr.x} ${curr.y}`;
-    }
-
-    return path;
-  };
 
   return (
     <div className="flex-1 flex flex-col min-h-0">
@@ -243,16 +214,6 @@ export function ZOWHistory({ onBack }: ZOWHistoryProps) {
                 TIME
               </text>
 
-              {/* Zone labels */}
-              <text x={133.33} y={35} textAnchor="middle" fontSize="11" fill="#DC2626" fontFamily="Inter, sans-serif" fontWeight="600">
-                Ill Being
-              </text>
-              <text x={320} y={35} textAnchor="middle" fontSize="11" fill="#D97706" fontFamily="Inter, sans-serif" fontWeight="600">
-                Well Being
-              </text>
-              <text x={506.67} y={35} textAnchor="middle" fontSize="11" fill="#059669" fontFamily="Inter, sans-serif" fontWeight="600">
-                Wellbeing
-              </text>
 
               {/* X-axis labels */}
               <text x={133.33} y={690} textAnchor="middle" fontSize="9" fill="#6B7280" fontFamily="Inter, sans-serif">
@@ -265,7 +226,7 @@ export function ZOWHistory({ onBack }: ZOWHistoryProps) {
                 HIGH (6-7)
               </text>
 
-              {/* Dots - no connecting lines */}
+              {/* Snake flow with connecting lines */}
               {(() => {
                 const positions = filteredData.map((entry, index) => {
                   const x = 40 + ((entry.score - 1) / 6) * 560;
@@ -273,28 +234,47 @@ export function ZOWHistory({ onBack }: ZOWHistoryProps) {
                   return { x, y, entry };
                 });
 
-                return positions.map((pos, index) => (
-                  <g key={index}>
-                    <circle
-                      cx={pos.x}
-                      cy={pos.y}
-                      r={8}
-                      fill={getColorForScore(pos.entry.score)}
-                      stroke="white"
-                      strokeWidth="3"
-                    />
-                    {pos.entry.triggers && (
-                      <circle
-                        cx={pos.x}
-                        cy={pos.y}
-                        r={14}
-                        fill="none"
-                        stroke="#EF4444"
-                        strokeWidth="2"
-                      />
+                // Generate smooth path
+                let snakePath = positions.length > 0 ? `M ${positions[0].x} ${positions[0].y}` : '';
+                for (let i = 1; i < positions.length; i++) {
+                  const prev = positions[i - 1];
+                  const curr = positions[i];
+                  const midY = (prev.y + curr.y) / 2;
+                  snakePath += ` Q ${prev.x} ${midY}, ${curr.x} ${curr.y}`;
+                }
+
+                return (
+                  <>
+                    {/* Connecting path */}
+                    {positions.length > 1 && (
+                      <path d={snakePath} fill="none" stroke="#A78BFA" strokeWidth="3" opacity="0.5" />
                     )}
-                  </g>
-                ));
+
+                    {/* Dots */}
+                    {positions.map((pos, index) => (
+                      <g key={index}>
+                        <circle
+                          cx={pos.x}
+                          cy={pos.y}
+                          r={8}
+                          fill={getColorForScore(pos.entry.score)}
+                          stroke="white"
+                          strokeWidth="3"
+                        />
+                        {pos.entry.triggers && (
+                          <circle
+                            cx={pos.x}
+                            cy={pos.y}
+                            r={14}
+                            fill="none"
+                            stroke="#EF4444"
+                            strokeWidth="2"
+                          />
+                        )}
+                      </g>
+                    ))}
+                  </>
+                );
               })()}
             </svg>
           </div>
