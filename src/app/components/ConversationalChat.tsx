@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Mic, Volume2, VolumeX, ArrowUp, Heart, BookOpen, Wind } from "lucide-react";
+import { Mic, Volume2, VolumeX, ArrowUp, Heart, BookOpen, Wind, Award } from "lucide-react";
 import { VoiceWaveOrb } from "./VoiceWaveOrb";
 import { BottomNav } from "./BottomNav";
 import { AnimatedLogo } from "./AnimatedLogo";
@@ -11,6 +11,7 @@ import { BreathingExercise } from "./BreathingExercise";
 import { GratitudeExercise } from "./GratitudeExercise";
 import { InsightReelScreen } from "./InsightReelScreen";
 import { ZOWScreen } from "./ZOWScreen";
+import { usePoints } from "../contexts/PointsContext";
 
 interface ConversationalChatProps {
   oracleName: string;
@@ -48,6 +49,10 @@ export function ConversationalChat({ oracleName, userName }: ConversationalChatP
     fact?: string;
     backgroundMedia?: string;
   } | null>(null);
+  const [pointsNotification, setPointsNotification] = useState<{ points: number; category: string } | null>(null);
+
+  // Points tracking context
+  const { detectIntentFromText, addActivity, streakMultiplier } = usePoints();
   const [pendingPersonalizedQuestion, setPendingPersonalizedQuestion] = useState<string | null>(null);
   const [hasTriggeredDemo, setHasTriggeredDemo] = useState(false); // Track if demo has run
   const [showQuickReplies, setShowQuickReplies] = useState(true); // Show quick reply chips initially
@@ -126,7 +131,29 @@ export function ConversationalChat({ oracleName, userName }: ConversationalChatP
 
   const handleUserMessage = (text: string, hasAudio: boolean = false) => {
     setMessages(prev => [...prev, { type: 'user', text, hasAudio }]);
-    
+
+    // SAMPLE INTENT DETECTION - Detect if message relates to user's daily intentions
+    const detection = detectIntentFromText(text);
+    if (detection.detected && detection.intentId) {
+      // Award points for talking about their intent
+      addActivity(detection.intentId, {
+        type: 'chat',
+        description: `Discussed "${text.substring(0, 50)}..."`
+      });
+
+      // Show points notification
+      const pointsEarned = 5 * streakMultiplier;
+      setPointsNotification({
+        points: pointsEarned,
+        category: detection.category || 'general'
+      });
+
+      // Hide notification after 3 seconds
+      setTimeout(() => {
+        setPointsNotification(null);
+      }, 3000);
+    }
+
     // Check if this is answer to job duration question
     if (awaitingJobDurationAnswer) {
       setAwaitingJobDurationAnswer(false);
@@ -324,10 +351,53 @@ export function ConversationalChat({ oracleName, userName }: ConversationalChatP
         </div>
       </div>
 
+      {/* Points Notification Toast */}
+      {pointsNotification && (
+        <div
+          className="absolute top-20 left-1/2 transform -translate-x-1/2 z-50 animate-bounce"
+          style={{
+            animation: 'slideDown 0.3s ease-out'
+          }}
+        >
+          <div
+            className="px-6 py-3 rounded-full flex items-center gap-3 shadow-lg"
+            style={{
+              background: 'linear-gradient(135deg, #A78BFA 0%, #8B5CF6 100%)',
+              border: '2px solid white'
+            }}
+          >
+            <Award className="w-5 h-5" style={{ color: 'white' }} />
+            <span
+              className="text-base"
+              style={{
+                fontFamily: 'Inter, sans-serif',
+                fontWeight: 700,
+                color: 'white'
+              }}
+            >
+              +{pointsNotification.points} points!
+            </span>
+            {streakMultiplier > 1 && (
+              <span
+                className="text-xs px-2 py-1 rounded-full"
+                style={{
+                  background: 'rgba(255,255,255,0.3)',
+                  fontFamily: 'Inter, sans-serif',
+                  fontWeight: 600,
+                  color: 'white'
+                }}
+              >
+                {streakMultiplier}x streak
+              </span>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Messages Area */}
-      <div 
+      <div
         className="flex-1 overflow-y-auto px-4 pt-4"
-        style={{ 
+        style={{
           background: '#FAFAFA',
           paddingBottom: 'calc(200px + 5rem)' // Space for sticky bottom card
         }}

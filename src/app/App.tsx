@@ -2,20 +2,29 @@ import { useState } from "react";
 import { LoginScreen } from "./components/LoginScreen";
 import { UserInfoCapture } from "./components/UserInfoCapture";
 import { OracleSetup, OracleConfig } from "./components/OracleSetup";
+import { CompanySelection } from "./components/CompanySelection";
+import { DailyIntentCapture } from "./components/DailyIntentCapture";
+import { PersonalLeaderboard } from "./components/PersonalLeaderboard";
+import { ProgressionSpiral } from "./components/ProgressionSpiral";
+import { RewardsAndBadges } from "./components/RewardsAndBadges";
 import { LifeSatisfactionScale } from "./components/LifeSatisfactionScale";
 import { ZOWScreen } from "./components/ZOWScreen";
 import { HomeScreen } from "./components/HomeScreen";
 import { ConversationalChat } from "./components/ConversationalChat";
 import { AnimatedBackground } from "./components/AnimatedBackground";
+import { PointsProvider, usePoints } from "./contexts/PointsContext";
 
-type AppState = "login" | "userInfo" | "oracleSetup" | "lifeSatisfaction" | "zow" | "home" | "chat";
+type AppState = "login" | "userInfo" | "oracleSetup" | "companySelection" | "dailyIntent" | "personalLeaderboard" | "progression" | "rewards" | "lifeSatisfaction" | "zow" | "home" | "chat";
 
 interface UserInfo {
   name: string;
   gender: string;
+  company?: string;
+  companyId?: string;
+  companyEmail?: string;
 }
 
-function App() {
+function AppContent() {
   const [appState, setAppState] = useState<AppState>("login");
   const [userInfo, setUserInfo] = useState<UserInfo>({ name: "", gender: "" });
   const [oracleConfig, setOracleConfig] = useState<OracleConfig>({
@@ -25,6 +34,8 @@ function App() {
   });
   const [lifeSatisfactionScores, setLifeSatisfactionScores] = useState<number[]>([]);
   const [micPermissionGranted, setMicPermissionGranted] = useState(false);
+
+  const { addIntent, intents, pillarProgress, totalPoints, currentStreak, updateStreak } = usePoints();
 
   const handleLogin = () => {
     setAppState("userInfo");
@@ -37,7 +48,39 @@ function App() {
 
   const handleOracleSetupComplete = (config: OracleConfig) => {
     setOracleConfig(config);
-    setAppState("chat"); // Go straight to chat after oracle setup
+    setAppState("companySelection");
+  };
+
+  const handleCompanySelectionComplete = (companyName: string, companyEmail: string, companyId?: string) => {
+    setUserInfo(prev => ({ ...prev, company: companyName, companyEmail, companyId }));
+    setAppState("dailyIntent");
+  };
+
+  const handleDailyIntentComplete = (dailyIntents: any[]) => {
+    // Add all daily intents to the points system
+    dailyIntents.forEach(intent => addIntent(intent));
+    setAppState("personalLeaderboard");
+  };
+
+  const handlePersonalLeaderboardStart = () => {
+    updateStreak();
+    setAppState("chat");
+  };
+
+  const handleViewProgression = () => {
+    setAppState("progression");
+  };
+
+  const handleViewRewards = () => {
+    setAppState("rewards");
+  };
+
+  const handleCloseProgression = () => {
+    setAppState("chat");
+  };
+
+  const handleCloseRewards = () => {
+    setAppState("chat");
   };
 
   const handleLifeSatisfactionComplete = (scores: number[]) => {
@@ -68,11 +111,46 @@ function App() {
         />
       )}
       {appState === "oracleSetup" && (
-        <OracleSetup 
-          userName={userInfo.name} 
+        <OracleSetup
+          userName={userInfo.name}
           onComplete={handleOracleSetupComplete}
           permissionGranted={micPermissionGranted}
           onPermissionGranted={setMicPermissionGranted}
+        />
+      )}
+      {appState === "companySelection" && (
+        <CompanySelection
+          userName={userInfo.name}
+          onComplete={handleCompanySelectionComplete}
+        />
+      )}
+      {appState === "dailyIntent" && (
+        <DailyIntentCapture
+          userName={userInfo.name}
+          onComplete={handleDailyIntentComplete}
+        />
+      )}
+      {appState === "personalLeaderboard" && (
+        <PersonalLeaderboard
+          userName={userInfo.name}
+          intents={intents}
+          onGetStarted={handlePersonalLeaderboardStart}
+        />
+      )}
+      {appState === "progression" && (
+        <ProgressionSpiral
+          userName={userInfo.name}
+          progress={pillarProgress}
+          totalPoints={totalPoints}
+          onClose={handleCloseProgression}
+        />
+      )}
+      {appState === "rewards" && (
+        <RewardsAndBadges
+          userName={userInfo.name}
+          totalPoints={totalPoints}
+          currentStreak={currentStreak}
+          onClose={handleCloseRewards}
         />
       )}
       {appState === "lifeSatisfaction" && (
@@ -93,6 +171,14 @@ function App() {
       )}
       <AnimatedBackground />
     </>
+  );
+}
+
+function App() {
+  return (
+    <PointsProvider>
+      <AppContent />
+    </PointsProvider>
   );
 }
 
